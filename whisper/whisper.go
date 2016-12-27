@@ -469,9 +469,13 @@ func (w *Whisper) Update(point Point) error {
 	return nil
 }
 
-func pointSum(info ArchiveInfo, a, b []Point) []Point {
+func pointSum(info ArchiveInfo, ar, br []Point) []Point {
 	m := make(map[uint32]Point)
 	v := make([]Point, 0, len(m))
+
+	// TODO: Is quantization actually necessary here?
+	a := quantizeArchive(ar, info.SecondsPerPoint)
+	b := quantizeArchive(br, info.SecondsPerPoint)
 
 	for _, p := range a {
 		m[p.Timestamp] = p
@@ -479,11 +483,9 @@ func pointSum(info ArchiveInfo, a, b []Point) []Point {
 
 	for _, p := range b {
 		if val, ok := m[p.Timestamp]; ok {
-			// TODO: Does this actually do what we think?
-			val.Value += p.Value
-		} else {
-			m[p.Timestamp] = p
+			p.Value += val.Value
 		}
+		m[p.Timestamp] = p
 	}
 
 	now := uint32(time.Now().Unix())
@@ -497,7 +499,7 @@ func pointSum(info ArchiveInfo, a, b []Point) []Point {
 		v = append(v, value)
 	}
 
-	return v
+	return quantizeArchive(v, info.SecondsPerPoint)
 }
 
 // AddWhisper integrates the points from another whisper file by summing them into the first.
