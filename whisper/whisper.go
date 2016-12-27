@@ -510,9 +510,8 @@ func (a *Whisper) AddWhisper(b *Whisper) error {
 		return err
 	}
 
-	for i := 0; i < len(a.Header.Archives); i++ {
-		info := a.Header.Archives[i]
-
+	// TODO: Assumes consistent order of retention. Is that safe?
+	for i := len(a.Header.Archives) - 1; i >= 0; i-- {
 		ap, err := a.DumpArchive(i)
 		if err != nil {
 			return err
@@ -526,15 +525,9 @@ func (a *Whisper) AddWhisper(b *Whisper) error {
 		points = pointSum(a.Header.Archives[i], ap, bp)
 		sort.Sort(points)
 
-		// Only keep up to max most recent points for archive
-		if len(points) > int(info.Points) {
-			start := len(points) - int(info.Points)
-			points = points[start:]
-		}
-
-		err = a.writeArchive(info, points...)
-		if err != nil {
-			return err
+		updateErr := a.UpdateMany(points)
+		if updateErr != nil {
+			return updateErr
 		}
 	}
 
