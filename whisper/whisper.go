@@ -1,8 +1,5 @@
-/*
+// Package whisper implements an interface to the whisper database format used by the Graphite project (https://github.com/graphite-project/)
 
-Package whisper implements an interface to the whisper database format used by the Graphite project (https://github.com/graphite-project/)
-
-*/
 package whisper
 
 import (
@@ -210,23 +207,20 @@ var (
 	ErrInsufficientPoints = errors.New("archive has insufficient points to aggregate to a lower precision")
 )
 
-/*
-
-validateArchiveList validates a list of ArchiveInfos.
-
-The list must:
-
-1. Have at least one ArchiveInfo
-
-2. No archive may be a duplicate of another.
-
-3. Higher precision archives' precision must evenly divide all lower precision archives' precision.
-
-4. Lower precision archives must cover larger time intervals than higher precision archives.
-
-5. Each archive must have at least enough points to consolidate to the next archive
-
-*/
+// validateArchiveList validates a list of ArchiveInfos.
+//
+// The list must:
+//
+// 1. Have at least one ArchiveInfo
+//
+// 2. No archive may be a duplicate of another.
+//
+// 3. Higher precision archives' precision must evenly divide all lower precision archives' precision.
+//
+// 4. Lower precision archives must cover larger time intervals than higher precision archives.
+//
+// 5. Each archive must have at least enough points to consolidate to the next archive
+//
 func validateArchiveList(archives []ArchiveInfo) error {
 	sort.Sort(bySecondsPerPoint(archives))
 
@@ -885,7 +879,7 @@ func (w *Whisper) writeArchive(archive ArchiveInfo, points ...Point) error {
 
 // pointOffset returns the offset of a timestamp within an archive
 func (w *Whisper) pointOffset(archive ArchiveInfo, timestamp uint32) (offset uint32, err error) {
-	basePoint, err := w.readPoint(archive.Offset)
+	basePoint, err := w.readPoint(archive.Offset) // Start of archive
 	if err != nil {
 		return 0, err
 	}
@@ -907,20 +901,18 @@ func (w *Whisper) pointOffset(archive ArchiveInfo, timestamp uint32) (offset uin
 	return archive.Offset + byteDistance, nil
 }
 
-/*
-ParseArchiveInfo returns an ArchiveInfo represented by the string.
-
-The string must consist of two numbers, the precision and retention, separated by a colon (:).
-
-Both the precision and retention strings accept a unit suffix. Acceptable suffixes are: "s" for second,
-"m" for minute, "h" for hour, "d" for day, "w" for week, and "y" for year.
-
-The precision string specifies how large of a time interval is represented by a single point in the archive.
-
-The retention string specifies how long points are kept in the archive. If no suffix is given for the retention
-it is taken to mean a number of points and not a duration.
-
-*/
+// ParseArchiveInfo returns an ArchiveInfo represented by the string.
+//
+// The string must consist of two numbers, the precision and retention, separated by a colon (:).
+//
+// Both the precision and retention strings accept a unit suffix. Acceptable suffixes are: "s" for second,
+// "m" for minute, "h" for hour, "d" for day, "w" for week, and "y" for year.
+//
+// The precision string specifies how large of a time interval is represented by a single point in the archive.
+//
+// The retention string specifies how long points are kept in the archive. If no suffix is given for the retention
+// it is taken to mean a number of points and not a duration.
+//
 func ParseArchiveInfo(archiveString string) (ArchiveInfo, error) {
 	a := ArchiveInfo{}
 	c := strings.Split(archiveString, ":")
