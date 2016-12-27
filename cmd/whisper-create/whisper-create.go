@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/kisielk/whisper-go/whisper"
+	"github.com/brandt/whisper-go/whisper"
 	"log"
 	"os"
 	"strings"

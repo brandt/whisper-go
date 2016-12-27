@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/kisielk/whisper-go/whisper"
 	"flag"
 	"fmt"
+	"github.com/brandt/whisper-go/whisper"
 	"log"
-	"time"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
 )
 
 func usage() {
@@ -32,14 +32,13 @@ func main() {
 	}
 
 	// Parse all the points
-	var points = make([]whisper.Point, len(args) - 1)
+	var points = make([]whisper.Point, len(args)-1)
 	for i, p := range args[1:] {
 		splitP := strings.Split(p, ":")
 
 		if len(splitP) != 2 {
 			log.Fatalf("invalid point %s: %s", p, err)
 		}
-
 
 		// Parse the timestamp
 		var timestamp uint32

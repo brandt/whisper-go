@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/kisielk/whisper-go/whisper"
+	"github.com/brandt/whisper-go/whisper"
 	"flag"
 	"fmt"
 	"log"

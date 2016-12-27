@@ -12,4 +12,4 @@ Note that it is still in development so the API is subject to change.
 
 API Documentation
 -----------------
-API documentation can be found at http://godoc.org/github.com/kisielk/whisper-go/whisper
+API documentation can be found at http://godoc.org/github.com/brandt/whisper-go/whisper
