@@ -343,6 +343,17 @@ func Create(path string, archives []ArchiveInfo, options CreateOptions) (*Whispe
 	return OpenWhisper(file)
 }
 
+// Clone creates a new Whisper file with the same format as this one.
+func (w *Whisper) Clone(path string) (*Whisper, error) {
+	opts := CreateOptions{
+		XFilesFactor:      w.Header.Metadata.XFilesFactor,
+		AggregationMethod: w.Header.Metadata.AggregationMethod,
+	}
+
+	wsp, err := Create(path, w.Header.Archives, opts)
+	return wsp, err
+}
+
 // OpenWhisper opens an existing Whisper database from the given ReadWriteSeeker.
 func OpenWhisper(f io.ReadWriteSeeker) (*Whisper, error) {
 	header, err := readHeader(f)
