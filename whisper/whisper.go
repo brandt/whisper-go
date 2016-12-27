@@ -354,6 +354,39 @@ func (w *Whisper) Clone(path string) (*Whisper, error) {
 	return wsp, err
 }
 
+// IsSame tests if the Whisper files have the same format.
+func (a *Whisper) IsSame(b *Whisper) (bool, error) {
+	if a.Header.Metadata.XFilesFactor != b.Header.Metadata.XFilesFactor {
+		return false, fmt.Errorf("whisper databases have different XFilesFactor")
+	}
+
+	if a.Header.Metadata.AggregationMethod != b.Header.Metadata.AggregationMethod {
+		return false, fmt.Errorf("whisper databases have different aggregation methods")
+	}
+
+	if len(a.Header.Archives) != len(b.Header.Archives) {
+		return false, fmt.Errorf("whisper databases have different number of archives")
+	}
+
+	for i, arcA := range a.Header.Archives {
+		arcB := b.Header.Archives[i]
+
+		if arcA.Offset != arcB.Offset {
+			return false, fmt.Errorf("offset differs in archive #%d", i)
+		}
+
+		if arcA.SecondsPerPoint != arcB.SecondsPerPoint {
+			return false, fmt.Errorf("seconds per point differ in archive #%d", i)
+		}
+
+		if arcA.Points != arcB.Points {
+			return false, fmt.Errorf("number of points differ in archive #%d", i)
+		}
+	}
+
+	return true, nil
+}
+
 // OpenWhisper opens an existing Whisper database from the given ReadWriteSeeker.
 func OpenWhisper(f io.ReadWriteSeeker) (*Whisper, error) {
 	header, err := readHeader(f)
