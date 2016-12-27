@@ -36,6 +36,7 @@ func main() {
 
 	if _, err := os.Stat(dstPath); err == nil {
 		// The destination file already exists; just open it
+		// TODO: Should we just fail to prevent double-counting on a second run?
 		d, openErr := whisper.Open(dstPath)
 		if openErr != nil {
 			log.Fatalln("error opening dest file:", openErr)
