@@ -281,6 +281,7 @@ type CreateOptions struct {
 func DefaultCreateOptions() CreateOptions {
 	return CreateOptions{DefaultXFilesFactor, DefaultAggregationMethod, false}
 }
+
 // headerSize calculates the size of a header with n archives
 func headerSize(n int) uint32 {
 	return metadataSize + (archiveInfoSize * uint32(n))
@@ -463,6 +464,76 @@ func (w *Whisper) Update(point Point) error {
 			break
 		}
 		higherArchive = lowerArchive
+	}
+
+	return nil
+}
+
+func pointSum(info ArchiveInfo, a, b []Point) []Point {
+	m := make(map[uint32]Point)
+	v := make([]Point, 0, len(m))
+
+	for _, p := range a {
+		m[p.Timestamp] = p
+	}
+
+	for _, p := range b {
+		if val, ok := m[p.Timestamp]; ok {
+			// TODO: Does this actually do what we think?
+			val.Value += p.Value
+		} else {
+			m[p.Timestamp] = p
+		}
+	}
+
+	now := uint32(time.Now().Unix())
+	retention := info.Retention()
+	for _, value := range m {
+		age := now - value.Timestamp
+		// Drop expired metrics
+		if age > retention {
+			continue
+		}
+		v = append(v, value)
+	}
+
+	return v
+}
+
+// AddWhisper integrates the points from another whisper file by summing them into the first.
+// See: https://github.com/graphite-project/whisper/blob/5ce9e80/whisper.py#L902
+func (a *Whisper) AddWhisper(b *Whisper) error {
+	sameFormat, err := a.IsSame(b)
+	if !sameFormat {
+		return err
+	}
+
+	for i := 0; i < len(a.Header.Archives); i++ {
+		info := a.Header.Archives[i]
+
+		ap, err := a.DumpArchive(i)
+		if err != nil {
+			return err
+		}
+		bp, err := b.DumpArchive(i)
+		if err != nil {
+			return err
+		}
+
+		var points archive
+		points = pointSum(a.Header.Archives[i], ap, bp)
+		sort.Sort(points)
+
+		// Only keep up to max most recent points for archive
+		if len(points) > int(info.Points) {
+			start := len(points) - int(info.Points)
+			points = points[start:]
+		}
+
+		err = a.writeArchive(info, points...)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
