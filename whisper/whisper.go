@@ -35,7 +35,7 @@ type Metadata struct {
 // ArchiveInfo holds metadata about a single archive within a whisper database
 type ArchiveInfo struct {
 	Offset          uint32 // The byte offset of the archive within the database
-	SecondsPerPoint uint32 // The number of seconds of elapsed time represented by a data point
+	SecondsPerPoint uint32 // The number of seconds of elapsed time represented by a data point (AKA resolution)
 	Points          uint32 // The number of data points
 }
 
