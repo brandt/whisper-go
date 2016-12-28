@@ -519,9 +519,8 @@ func (a *Whisper) AddWhisper(b *Whisper) error {
 		points = pointSum(a.Header.Archives[i], ap, bp)
 		sort.Sort(points)
 
-		updateErr := a.UpdateMany(points)
-		if updateErr != nil {
-			return updateErr
+		if err := a.singleArchiveUpdateMany(a.Header.Archives[i], points); err != nil {
+			return err
 		}
 	}
 
@@ -726,6 +725,44 @@ PropagateLoop:
 		}
 		higher = info
 	}
+	return
+}
+
+// singleArchiveUpdateMany updates only the specified archive without propagating the values to other archives/resolutions
+func (w *Whisper) singleArchiveUpdateMany(archiveInfo ArchiveInfo, points archive) (err error) {
+	type stampedArchive struct {
+		timestamp uint32
+		points    archive
+	}
+	var archives []stampedArchive
+	var currentPoints archive
+	var previousTimestamp, archiveStart uint32
+
+	step := archiveInfo.SecondsPerPoint
+	points = quantizeArchive(points, step)
+
+	for _, point := range points {
+		if point.Timestamp == previousTimestamp {
+			// ignore values with duplicate timestamps
+			continue
+		}
+
+		if (previousTimestamp != 0) && (point.Timestamp != previousTimestamp+step) {
+			// the current point is not contiguous to the last, start a new series of points
+
+			// append the current archive to the archive list
+			archiveStart = previousTimestamp - (uint32(len(currentPoints)) * step)
+			archives = append(archives, stampedArchive{archiveStart, currentPoints})
+
+			// start a new archive
+			currentPoints = archive{}
+		}
+
+		currentPoints = append(currentPoints, point)
+		previousTimestamp = point.Timestamp
+
+	}
+
 	return
 }
 
