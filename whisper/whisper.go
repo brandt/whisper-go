@@ -463,6 +463,38 @@ func (w *Whisper) Update(point Point) error {
 	return nil
 }
 
+func nonNegativeDerivative(points []Point) []Point {
+	var arc archive
+	res := make([]Point, 0, len(points))
+	prev := float64(0.0)
+	reset := true
+
+	arc = points
+	sort.Sort(arc)
+
+	for _, value := range arc {
+		if value.Timestamp == 0 {
+			reset = true
+			continue
+		}
+
+		if reset {
+			reset = false
+			prev = value.Value
+			continue
+		}
+
+		diff := value.Value - prev
+		prev = value.Value
+		if diff >= 0.0 {
+			p := Point{value.Timestamp, diff}
+			res = append(res, p)
+		}
+	}
+
+	return res
+}
+
 // pointSum finds the points for common timestamps between two sets and adds them together.
 // Returns a single set with the sums aligned to the given archive and with expired metrics pruned.
 func pointSum(info ArchiveInfo, ar, br []Point) []Point {
@@ -495,7 +527,38 @@ func pointSum(info ArchiveInfo, ar, br []Point) []Point {
 		v = append(v, value)
 	}
 
+	// TODO: I don't think we need to do this again.
 	return quantizeArchive(v, info.SecondsPerPoint)
+}
+
+// AddWhisperDelta integrates the points from another whisper file by summing the deltas.
+func (a *Whisper) AddWhisperDelta(b *Whisper) error {
+	sameFormat, err := a.IsSame(b)
+	if !sameFormat {
+		return err
+	}
+
+	// TODO: Assumes consistent order of retention. Is that safe?
+	for i := len(a.Header.Archives) - 1; i >= 0; i-- {
+		ap, err := a.DumpArchive(i)
+		if err != nil {
+			return err
+		}
+		bp, err := b.DumpArchive(i)
+		if err != nil {
+			return err
+		}
+
+		var points archive
+		points = pointSum(a.Header.Archives[i], nonNegativeDerivative(ap), nonNegativeDerivative(bp))
+		sort.Sort(points)
+
+		if err := a.singleArchiveUpdateMany(a.Header.Archives[i], points); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // AddWhisper integrates the points from another whisper file by summing them into the first.
