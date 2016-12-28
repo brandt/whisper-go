@@ -1,7 +1,9 @@
 // Offline aggregation of multiple Whisper files.
 //
-// Currently, the only supported aggregation method is sum, which works like
-// sumSeries.
+// Currently, there are two aggregation modes:
+// 1. "sum" which works like sumSeries
+// 2. "delta" which works like nonNegativeDerivative
+//
 
 package main
 
