@@ -14,13 +14,38 @@ import (
 	"path/filepath"
 )
 
+type Mode int
+
+const (
+	SumSeries Mode = iota
+	Delta
+)
+
+var mode Mode
+
+func init() {
+	var modeFlag string
+
+	flag.StringVar(&modeFlag, "mode", "sum", "aggregation mode")
+	flag.Parse()
+
+	switch modeFlag {
+	case "sum":
+		mode = SumSeries
+	case "delta":
+		mode = Delta
+	default:
+		log.Fatalln("invalid mode selected")
+	}
+
+}
+
 func usage() {
 	fmt.Println("Usage: whisper-aggregate DEST MATCH")
 	os.Exit(1)
 }
 
 func main() {
-	flag.Parse()
 	if flag.NArg() != 2 {
 		usage()
 	}
@@ -62,7 +87,17 @@ func main() {
 			log.Fatalf("error opening source file: %s: %s\n", f, err)
 		}
 
-		errRef := dst.AddWhisper(src)
+		var errRef error
+
+		switch mode {
+		case Delta:
+			errRef = dst.AddWhisperDelta(src)
+		case SumSeries:
+			errRef = dst.AddWhisper(src)
+		default:
+			errRef = dst.AddWhisper(src)
+		}
+
 		if errRef != nil {
 			log.Fatalln("error writing to destination file:", errRef)
 		}
