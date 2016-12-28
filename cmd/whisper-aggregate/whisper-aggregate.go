@@ -1,3 +1,8 @@
+// Offline aggregation of multiple Whisper files.
+//
+// Currently, the only supported aggregation method is sum, which works like
+// sumSeries.
+
 package main
 
 import (

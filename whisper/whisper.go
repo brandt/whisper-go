@@ -463,6 +463,8 @@ func (w *Whisper) Update(point Point) error {
 	return nil
 }
 
+// pointSum finds the points for common timestamps between two sets and adds them together.
+// Returns a single set with the sums aligned to the given archive and with expired metrics pruned.
 func pointSum(info ArchiveInfo, ar, br []Point) []Point {
 	m := make(map[uint32]Point)
 	v := make([]Point, 0, len(m))
