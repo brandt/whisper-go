@@ -765,6 +765,19 @@ func (w *Whisper) singleArchiveUpdateMany(archiveInfo ArchiveInfo, points archiv
 
 	}
 
+	if len(currentPoints) > 0 {
+		// If there are any more points remaining after the loop, make a new series for them as well
+		archiveStart = previousTimestamp - (uint32(len(currentPoints)) * step)
+		archives = append(archives, stampedArchive{archiveStart, currentPoints})
+	}
+
+	for _, archive := range archives {
+		err = w.writeArchive(archiveInfo, archive.points...)
+		if err != nil {
+			return err
+		}
+	}
+
 	return
 }
 
