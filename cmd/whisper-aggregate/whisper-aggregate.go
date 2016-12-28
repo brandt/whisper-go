@@ -32,32 +32,21 @@ func main() {
 		log.Fatal("no matching files")
 	}
 
-	var dst *whisper.Whisper
-
+	// Exit with an error if the dest file already exists
 	if _, err := os.Stat(dstPath); err == nil {
-		// The destination file already exists; just open it
-		// TODO: Should we just fail to prevent double-counting on a second run?
-		d, openErr := whisper.Open(dstPath)
-		if openErr != nil {
-			log.Fatalln("error opening dest file:", openErr)
-		}
-		dst = d
-	} else {
-		// The destination file doesn't yet exist.
-
-		// Create a new whisper file with the same structure as the first source
-		// file we found.
-		ref, openErr := whisper.Open(srcFiles[0])
-		if openErr != nil {
-			log.Fatalln("error opening dest file:", openErr)
-		}
-		d, cloneErr := ref.Clone(dstPath)
-		if cloneErr != nil {
-			log.Fatalf("error cloning src into new dest. src: %s: %s\n", srcFiles[0], cloneErr)
-		}
-		ref.Close()
-		dst = d
+		log.Fatalln("dest file already exists:", dstPath)
 	}
+
+	// Create a new file with the same structure as the first source file we found
+	ref, openErr := whisper.Open(srcFiles[0])
+	if openErr != nil {
+		log.Fatalln("error opening dest file:", openErr)
+	}
+	dst, cloneErr := ref.Clone(dstPath)
+	if cloneErr != nil {
+		log.Fatalf("error cloning src into new dest. src: %s: %s\n", srcFiles[0], cloneErr)
+	}
+	ref.Close()
 
 	// For each matching source file, add it to our dst file
 	for _, f := range srcFiles {
